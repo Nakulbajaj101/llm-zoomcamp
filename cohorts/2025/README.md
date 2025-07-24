@@ -12,4 +12,18 @@ Important links:
 
 * [Homework](01-intro/homework.md)
 
+[**Module 2: Vector Search**](02-vector-search/)
 
+* [Homework](02-vector-search/homework.md)
+
+[**Workshop: dlt**](workshops/dlt.md)
+
+* [Homework](workshops/dlt.md)
+
+[**Module A: Agents**](0a-agents/)
+
+* [Homework](0a-agents/homework.md)
+
+[**Module 3: Evaluation**](03-evaluation/)
+
+* [Homework](03-evaluation/homework.md)
