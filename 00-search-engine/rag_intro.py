@@ -4,7 +4,12 @@ import json
 import os
 
 import minsearch
+from elasticsearch import Elasticsearch
+from elasticsearch.exceptions import BadRequestError
 from openai import OpenAI
+from tqdm.auto import tqdm
+
+from config import host, index_name, index_settings, search_query
 
 
 def extract_documents(files: list[str]) -> list:
@@ -63,6 +68,39 @@ class Minsearch:
         """
         return self.index.search(query=query, boost_dict=boost_dict, filter_dict=filter_dict, num_results=num_results)
 
+class ElasticSearch:
+    def __init__(self, host: str, index_name: str):
+        self.client = Elasticsearch(host)
+        self.index_name = index_name
+
+    
+    def create_index(self, index_settings: dict):
+        try:
+            self.client.indices.create(body=index_settings, index=self.index_name,)
+        except BadRequestError:
+            print(f"Index {self.index_name} already exists. Skipping creation.")
+        except Exception as e:
+            print(f"An error occurred while creating the index: {e}")
+    
+    def fit(self, documents: list):
+        for doc in tqdm(documents):
+            self.client.index(document=doc, index=self.index_name)
+    
+    def search(self, search_query: dict):
+        results = self.client.search(index=self.index_name, body=search_query)
+        return results
+    
+    def extract_hits(self, results):
+        """
+        Extracts hits from the search results.
+        
+        Args:
+            results (dict): The search results from Elasticsearch.
+        
+        Returns:
+            list: List of documents from the search results.
+        """
+        return [hit['_source'] for hit in results['hits']['hits']]
 
 
 class OpenAIClient:
@@ -153,5 +191,29 @@ if __name__ == "__main__":
 
     # Send the prompt to the OpenAI API
     client_response = client.chat(query=promt)
+    # Print the response from the OpenAI API
+    print(client_response)
 
+    es = ElasticSearch(host=host, index_name=index_name)
+    es.create_index(index_settings=index_settings)
+
+    # Fit the Elasticsearch index with the documents
+    if len(documents) > 1034:
+        es.fit(documents)
+    else:
+        print("Skipping indexing as the number of documents is less than 1034.")
+    search_query["query"]["bool"]["must"]["multi_match"]["query"] = query
+
+    # Search the Elasticsearch index
+    results = es.search(search_query=search_query)
+    hits = es.extract_hits(results)
+
+    # Build the context from the search results
+    context = build_context(hits)
+    
+    promt = prompt_template.format(question=query, context=context)
+
+    client_response = client.chat(query=promt)
+
+    # Print the response from the OpenAI API
     print(client_response)
