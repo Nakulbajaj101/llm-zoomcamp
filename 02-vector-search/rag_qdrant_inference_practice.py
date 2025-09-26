@@ -18,7 +18,7 @@ def search(query, collection_name, model_handle, limit:int=1):
                                   limit=limit,
                                   with_payload=True
                                  )
-    return results
+    return results.points
 
 
 
@@ -45,7 +45,76 @@ def search_by_filter(query,
                                   limit=limit,
                                   with_payload=True
                                  )
+    return results.points
+
+
+def search_sparse(query: str, client, collection_name: str, limit: int=1) -> list[models.ScoredPoint]:
+
+    results = client.query_points(
+        collection_name=collection_name,
+        query=models.Document(
+            text=query,
+            model="Qdrant/bm25"
+        ),
+        limit=limit,
+        with_payload=True,
+        using="bm25"
+    )
     return results
+
+def search_multi_stage_sparse_and_dense(query: str, client, collection_name, limit: int) -> list[models.ScoredPoint]:
+    
+    results = client.query_points(
+        collection_name=collection_name,
+        prefetch=[
+            models.Prefetch(
+                query=models.Document(
+                    text=query,
+                    model="jinaai/jina-embeddings-v2-small-en"
+                ),
+                using='jina-small',
+                limit=(limit*5)
+            )
+        ],
+        query=models.Document(
+            text=query,
+            model="Qdrant/bm25"
+        ),
+        limit=limit,
+        using="bm25",
+        with_payload=True
+    )
+    return results.points
+
+def search_hybrid(query: str, client, collection_name: str, limit: int=1) -> list[models.ScoredPoint]:
+    
+    results = client.query_points(
+        collection_name=collection_name,
+        prefetch=[
+            models.Prefetch(
+                query=models.Document(
+                    text=query,
+                    model="jinaai/jina-embeddings-v2-small-en"
+                ),
+                using='jina-small',
+                limit=(limit*5)
+            ),
+            models.Prefetch(
+                query=models.Document(
+                    text=query,
+                    model="Qdrant/bm25"
+                ),
+                using="bm25",
+                limit=(limit*5)
+            )
+        ],
+        query=models.FusionQuery(
+            fusion=models.Fusion.RRF
+        ),
+        with_payload=True,
+    )
+    return results.points
+
 
 class OpenAIClient:
     def __init__(self, api_key, model="gpt-4.1-nano"):
@@ -86,10 +155,15 @@ def build_context(result):
         str: A formatted string containing the context from the documents.
     """
     context = ""
-    for point in result.points:
-        doc = point.payload
-        context += f"Section: {doc['section']}\nanswer: {doc['text']}\n\n"
-        course = doc['course']
+    for point in result:
+        if isinstance(point, tuple):
+            for doc in point[1]:
+                context += f"Section: {doc.payload['section']}\nanswer: {doc.payload['text']}\n\n"
+                course = doc.payload['course']
+        else:
+            doc = point.payload
+            context += f"Section: {doc['section']}\nanswer: {doc['text']}\n\n"
+            course = doc['course']
     context = f"Course: {course}" + "\n\n" + context
     return context
 
@@ -129,4 +203,57 @@ if __name__ == "__main__":
     # Send the prompt to the OpenAI API
     client_response = client.chat(query=promt)
     # Print the response from the OpenAI API
+    print(query)
+    print()
+    print(client_response)
+
+    query = "data engineer"
+    results = search_sparse(query=query, collection_name="zoomcamo-rag-sparse", client=qv.client, limit=5)
+
+    # Build the context from the search results
+    context = build_context(results)
+
+    promt = prompt_template.format(question=query, context=context)
+
+    client = OpenAIClient(api_key=os.getenv("OPENAI_API_KEY"), model=MODEL)
+
+    # Send the prompt to the OpenAI API
+    client_response = client.chat(query=promt)
+    # Print the response from the OpenAI API
+    print(query)
+    print()
+    print(client_response)
+
+    query = "data engineer"
+    results = search_multi_stage_sparse_and_dense(query=query, collection_name="zoomcamo-rag-sparse-dense", client=qv.client, limit=5)
+
+    # Build the context from the search results
+    context = build_context(results)
+
+    promt = prompt_template.format(question=query, context=context)
+
+    client = OpenAIClient(api_key=os.getenv("OPENAI_API_KEY"), model=MODEL)
+
+    # Send the prompt to the OpenAI API
+    client_response = client.chat(query=promt)
+    # Print the response from the OpenAI API
+    print(query)
+    print()
+    print(client_response)
+
+    query = "data engineer"
+    results = search_hybrid(query=query, collection_name="zoomcamo-rag-sparse-dense", client=qv.client, limit=5)
+
+    # Build the context from the search results
+    context = build_context(results)
+
+    promt = prompt_template.format(question=query, context=context)
+
+    client = OpenAIClient(api_key=os.getenv("OPENAI_API_KEY"), model=MODEL)
+
+    # Send the prompt to the OpenAI API
+    client_response = client.chat(query=promt)
+    # Print the response from the OpenAI API
+    print(query)
+    print()
     print(client_response)
