@@ -10,4 +10,5 @@ dependencies = [
     "openai>=1.108.1",
     "pandas>=2.3.2",
     "qdrant-client[fastembed]>=1.15.1",
+    "sentence-transformers>=5.1.1",
 ]
