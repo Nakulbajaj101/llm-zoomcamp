@@ -188,62 +188,65 @@ if __name__ == "__main__":
     """.strip()
 
 
-    query = "When can I start the course?"
+    # query = "When can I start the course?"
 
-    # Perform the search from Qdrant vector database
-    results = search_by_filter(query=query, client=qv.client, limit=5)
+    # # Perform the search from Qdrant vector database
+    # results = search_by_filter(query=query, client=qv.client, limit=5)
 
-    # Build the context from the search results
-    context = build_context(results)
+    # # Build the context from the search results
+    # context = build_context(results)
 
-    promt = prompt_template.format(question=query, context=context)
+    # promt = prompt_template.format(question=query, context=context)
 
-    client = OpenAIClient(api_key=os.getenv("OPENAI_API_KEY"), model=MODEL)
+    # client = OpenAIClient(api_key=os.getenv("OPENAI_API_KEY"), model=MODEL)
 
-    # Send the prompt to the OpenAI API
-    client_response = client.chat(query=promt)
-    # Print the response from the OpenAI API
-    print(query)
-    print()
-    print(client_response)
+    # # Send the prompt to the OpenAI API
+    # client_response = client.chat(query=promt)
+    # # Print the response from the OpenAI API
+    # print(query)
+    # print()
+    # print(client_response)
 
-    query = "data engineer"
-    results = search_sparse(query=query, collection_name="zoomcamo-rag-sparse", client=qv.client, limit=5)
+    # query = "data engineer"
+    # results = search_sparse(query=query, collection_name="zoomcamo-rag-sparse", client=qv.client, limit=5)
 
-    # Build the context from the search results
-    context = build_context(results)
+    # # Build the context from the search results
+    # context = build_context(results)
 
-    promt = prompt_template.format(question=query, context=context)
+    # promt = prompt_template.format(question=query, context=context)
 
-    client = OpenAIClient(api_key=os.getenv("OPENAI_API_KEY"), model=MODEL)
+    # client = OpenAIClient(api_key=os.getenv("OPENAI_API_KEY"), model=MODEL)
 
-    # Send the prompt to the OpenAI API
-    client_response = client.chat(query=promt)
-    # Print the response from the OpenAI API
-    print(query)
-    print()
-    print(client_response)
+    # # Send the prompt to the OpenAI API
+    # client_response = client.chat(query=promt)
+    # # Print the response from the OpenAI API
+    # print(query)
+    # print()
+    # print(client_response)
 
-    query = "data engineer"
-    results = search_multi_stage_sparse_and_dense(query=query, collection_name="zoomcamo-rag-sparse-dense", client=qv.client, limit=5)
+    # query = "data engineer"
+    # results = search_multi_stage_sparse_and_dense(query=query, collection_name="zoomcamo-rag-sparse-dense", client=qv.client, limit=5)
 
-    # Build the context from the search results
-    context = build_context(results)
+    # # Build the context from the search results
+    # context = build_context(results)
 
-    promt = prompt_template.format(question=query, context=context)
+    # promt = prompt_template.format(question=query, context=context)
 
-    client = OpenAIClient(api_key=os.getenv("OPENAI_API_KEY"), model=MODEL)
+    # client = OpenAIClient(api_key=os.getenv("OPENAI_API_KEY"), model=MODEL)
 
-    # Send the prompt to the OpenAI API
-    client_response = client.chat(query=promt)
-    # Print the response from the OpenAI API
-    print(query)
-    print()
-    print(client_response)
+    # # Send the prompt to the OpenAI API
+    # client_response = client.chat(query=promt)
+    # # Print the response from the OpenAI API
+    # print(query)
+    # print()
+    # print(client_response)
 
     query = "data engineer"
     results = search_hybrid(query=query, collection_name="zoomcamo-rag-sparse-dense", client=qv.client, limit=5)
-
+    for i, doc in enumerate(results):
+        if isinstance(doc, object):
+            print(f"ID={doc.id}, Score={doc.score}, Payload={doc.payload["text"]}")
+            print()
     # Build the context from the search results
     context = build_context(results)
 
