@@ -11,6 +11,7 @@ dependencies = [
     "notebook",
     "openai",
     "pandas>=2.3.1",
+    "ranx>=0.3.21",
     "scikit-learn",
     "sentence-transformers>=5.1.2",
     "tdqm",
