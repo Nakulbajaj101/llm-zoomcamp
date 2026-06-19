@@ -1,3 +1,5 @@
+import os
+
 COURSES_URL = "https://datatalks.club/faq/json/courses.json"
 COURSES_FAQ_BASE_URL = "https://datatalks.club/faq"
 INSTRUCTIONS = '''
@@ -17,3 +19,8 @@ PROMPT_TEMPLATE = """
 {context}
 </CONTEXT>
 """
+
+QDRANT_HOST = os.getenv("QDRANT_CLIENT", "http://localhost:6333")
+EMBEDDING_DIMENSIONALITY = 512
+MODEL_HANDLE = "jinaai/jina-embeddings-v2-small-en"
+COLLECTION_NAME = "zoomcamo-rag-sparse-dense"
